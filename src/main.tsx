@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HandThumbsUp, Person, BarChart } from 'react-bootstrap-icons';
 import Layout from './components/Layout';
@@ -17,6 +17,14 @@ createRoot(document.getElementById('root')!).render(
 
 
 function App() {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const heroStyle = {
     backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.3)), url('../assets/heroBg.jpg')`,
     backgroundAttachment: "fixed",
@@ -40,8 +48,8 @@ function App() {
   return <Layout>
     <div style={heroStyle} className="d-flex align-items-center justify-content-center">
       <div className="container">
-        <div style={{ position: "absolute", top: "20vh", zIndex: 0 }}>
-          <HelixDemo width={900} height={200} />
+        <div style={{ position: "absolute", left: 0,  top: "25vh", zIndex: 0 }}>
+          <HelixDemo width={windowWidth} height={200} key={windowWidth} />
         </div>
         <div className="row align-items-center">
           <div className="col-md-8">

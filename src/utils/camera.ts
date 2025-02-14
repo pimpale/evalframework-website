@@ -21,6 +21,7 @@ export type TrackballCameraOptions = {
   ortho?: Ortho,
   rotation?: quat,
   dampingFactor?: number,
+  lock_x?: boolean,
 }
 
 type Ortho = {
@@ -48,6 +49,8 @@ export class TrackballCamera {
   private rotationQ;
   // how much to damp the rotation at each step
   private dampingFactor: number;
+  // lock x-axis movement
+  private lock_x: boolean;
 
   private canvas: HTMLElement;
 
@@ -83,7 +86,7 @@ export class TrackballCamera {
 
     // get normalized mouse x and y
     const q = {
-      x: 2 * (e.clientX - client_cx) / trackballRadius,
+      x: this.lock_x ? 0 : 2 * (e.clientX - client_cx) / trackballRadius,
       y: 2 * (e.clientY - client_cy) / trackballRadius
     }
     return q;
@@ -168,6 +171,7 @@ export class TrackballCamera {
         this.dampingFactor = 0.9;
     }
 
+    this.lock_x = options.lock_x ?? false;
 
     this.canvas = ctx;
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { genPlane } from '../utils/uvplane';
-import { vec2 } from 'gl-matrix';
+import { quat, vec2 } from 'gl-matrix';
 import { TrackballCamera, } from '../utils/camera';
 import { createShader, createProgram, createTexture, overwriteTexture } from '../utils/webgl';
 import { colorScheme } from "../utils/colorscheme";
@@ -31,7 +31,7 @@ out vec3 v_color;
 out vec2 v_barycenter;
 
 void main() {
-   vec3 oldpos = vec3(a_position - vec3(0.5, 0.5, 0.5));
+   vec3 oldpos = a_position;
    vec3 newpos = oldpos/length(oldpos);
 
    vec3 lerpedPos = mix(oldpos, newpos, u_lerpAlpha)*0.9;
@@ -79,7 +79,104 @@ function getBarycenter(i: number) {
     return barycenter;
 }
 
-const detailLevel = 3;
+
+const topcolor = chroma(gruvboxTheme.blue).gl().slice(0, 3);
+const bottomcolor = chroma(gruvboxTheme.red).gl().slice(0, 3);
+const leftcolor = chroma(gruvboxTheme.green).gl().slice(0, 3);
+const rightcolor = chroma(gruvboxTheme.purple).gl().slice(0, 3);
+const frontcolor = chroma(gruvboxTheme.yellow).gl().slice(0, 3);
+const backcolor = chroma(gruvboxTheme.teal).gl().slice(0, 3);
+
+function genColoredUnitCube(n_divisions: number = 3) {
+    return [
+        // top level
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [v[0], 0, v[1], ...topcolor, ...getBarycenter(i % 3)]),
+        // bottomlevel
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [v[0], 1, v[1], ...bottomcolor, ...getBarycenter(i % 3)]),
+        // left level
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [0, v[0], v[1], ...leftcolor, ...getBarycenter(i % 3)]),
+        // right level
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [1, v[0], v[1], ...rightcolor, ...getBarycenter(i % 3)]),
+        // front level
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [v[0], v[1], 0, ...frontcolor, ...getBarycenter(i % 3)]),
+        // back level
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [v[0], v[1], 1, ...backcolor, ...getBarycenter(i % 3)]),
+    ];
+}
+
+function genColoredUnitPrismX(stretch_x: number, n_divisions = 3) {
+    // Calculate stretched divisions proportionally, rounding up
+    const x_divisions = Math.ceil(n_divisions * stretch_x);
+
+    return [
+        // top level (y=0)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => [v[0] * stretch_x, 0, v[1], ...topcolor, ...getBarycenter(i % 3)]),
+        // bottom level (y=1)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => [v[0] * stretch_x, 1, v[1], ...bottomcolor, ...getBarycenter(i % 3)]),
+        // left level (x=0)
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [0, v[0], v[1], ...leftcolor, ...getBarycenter(i % 3)]),
+        // right level (x=stretch_x)
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => [stretch_x, v[0], v[1], ...rightcolor, ...getBarycenter(i % 3)]),
+        // front level (z=0)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => [v[0] * stretch_x, v[1], 0, ...frontcolor, ...getBarycenter(i % 3)]),
+        // back level (z=1)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => [v[0] * stretch_x, v[1], 1, ...backcolor, ...getBarycenter(i % 3)]),
+    ];
+}
+
+
+function genColoredTwistedPrismX(stretch_x: number, n_divisions = 3, n_twists = 1) {
+    const x_divisions = Math.ceil(n_divisions * stretch_x);
+
+    const twistPoint = (x: number, y: number, z: number) => {
+        // Adjust x to be centered around 0
+        const centered_x = x - stretch_x / 2;
+        const angle = (x / stretch_x) * Math.PI * 2 * n_twists;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        // y and z are in [0,1], center them to [-0.5,0.5]
+        const centered_y = y - 0.5;
+        const centered_z = z - 0.5;
+        // Apply rotation to centered coordinates
+        const new_y = centered_y * cos - centered_z * sin;
+        const new_z = centered_y * sin + centered_z * cos;
+        return [centered_x, new_y, new_z];
+    };
+
+    return [
+        // top level (y=-0.5)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(v[0] * stretch_x, 0, v[1]);
+            return [x, y, z, ...topcolor, ...getBarycenter(i % 3)];
+        }),
+        // bottom level (y=0.5)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(v[0] * stretch_x, 1, v[1]);
+            return [x, y, z, ...bottomcolor, ...getBarycenter(i % 3)];
+        }),
+        // left level (x=-stretch_x/2)
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(0, v[0], v[1]);
+            return [x, y, z, ...leftcolor, ...getBarycenter(i % 3)];
+        }),
+        // right level (x=stretch_x/2)
+        ...genPlane(n_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(stretch_x, v[0], v[1]);
+            return [x, y, z, ...rightcolor, ...getBarycenter(i % 3)];
+        }),
+        // front level (z=-0.5)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(v[0] * stretch_x, v[1], 0);
+            return [x, y, z, ...frontcolor, ...getBarycenter(i % 3)];
+        }),
+        // back level (z=0.5)
+        ...genPlane(x_divisions, n_divisions).flatMap((v, i) => {
+            const [x, y, z] = twistPoint(v[0] * stretch_x, v[1], 1);
+            return [x, y, z, ...backcolor, ...getBarycenter(i % 3)];
+        }),
+    ];
+}
+
 
 type Point = {
     x: number,
@@ -103,6 +200,7 @@ class SingularityDemo extends React.Component<SingularityDemoProps, {}> {
     private torusLerpAlpha!: WebGLUniformLocation;
 
     private filledbuffer!: WebGLBuffer;
+    private nTriangles!: number;
 
     private requestID!: number;
 
@@ -112,7 +210,7 @@ class SingularityDemo extends React.Component<SingularityDemoProps, {}> {
 
     componentDidMount() {
         // init camera
-        this.camera = new TrackballCamera(this.canvas.current!, {});
+        this.camera = new TrackballCamera(this.canvas.current!, { lock_x: true, rotation: quat.fromEuler(quat.create(), 0.1, 0.0, 0.0) });
         this.vis = new VisibilityChecker(this.canvas.current!);
 
         // get webgl
@@ -134,29 +232,10 @@ class SingularityDemo extends React.Component<SingularityDemoProps, {}> {
         this.torusLerpAlpha = this.gl.getUniformLocation(program, "u_lerpAlpha")!;
         this.torusWorldViewProjectionLoc = this.gl.getUniformLocation(program, "u_worldViewProjection")!;
 
-        const topcolor = chroma(gruvboxTheme.blue).gl().slice(0, 3);
-        const bottomcolor = chroma(gruvboxTheme.red).gl().slice(0, 3);
-        const leftcolor = chroma(gruvboxTheme.green).gl().slice(0, 3);
-        const rightcolor = chroma(gruvboxTheme.purple).gl().slice(0, 3);
-        const frontcolor = chroma(gruvboxTheme.yellow).gl().slice(0, 3);
-        const backcolor = chroma(gruvboxTheme.teal).gl().slice(0, 3);
-
 
         // map different buffers
-        let filled = [
-            // top level
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [v[0], 0, v[1], ...topcolor, ...getBarycenter(i % 3)]),
-            // bottomlevel
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [v[0], 1, v[1], ...bottomcolor, ...getBarycenter(i % 3)]),
-            // left level
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [0, v[0], v[1], ...leftcolor, ...getBarycenter(i % 3)]),
-            // right level
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [1, v[0], v[1], ...rightcolor, ...getBarycenter(i % 3)]),
-            // front level
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [v[0], v[1], 0, ...frontcolor, ...getBarycenter(i % 3)]),
-            // back level
-            ...genPlane(detailLevel, detailLevel).flatMap((v, i) => [v[0], v[1], 1, ...backcolor, ...getBarycenter(i % 3)]),
-        ];
+        let filled = genColoredTwistedPrismX(50.0, 3, 1); // for example, to create 2 full twists
+        this.nTriangles = filled.length / 8;
 
         this.filledbuffer = this.gl.createBuffer()!;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.filledbuffer);
@@ -236,7 +315,7 @@ class SingularityDemo extends React.Component<SingularityDemoProps, {}> {
 
             // draw triangles
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.filledbuffer);
-            this.gl.drawArrays(this.gl.TRIANGLES, 0, detailLevel * detailLevel * 6 * 6);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.nTriangles);
         }
 
         this.requestID = window.requestAnimationFrame(this.animationLoop);
