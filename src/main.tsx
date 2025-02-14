@@ -1,17 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { FileEarmarkPdf, Github, Clipboard, HandThumbsUp, Person, BarChart } from 'react-bootstrap-icons';
-
-import Fig1 from './assets/figures/scaling_graph.png';
-
-import { Prism as SyntaxHighligher } from 'react-syntax-highlighter';
-import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { ArrowRight } from 'react-bootstrap-icons';
-
+import { HandThumbsUp, Person, BarChart } from 'react-bootstrap-icons';
+import Layout from './components/Layout';
+import HelixDemo from './components/HelixDemo';
 
 import './styles/style.scss';
 import 'bootstrap/dist/js/bootstrap';
-import Layout from './components/Layout';
 
 
 createRoot(document.getElementById('root')!).render(
@@ -29,7 +23,8 @@ function App() {
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
-    height: "50vh",
+    height: "35vh",
+    marginBottom: "4rem"
   };
 
   const mediaIconStyle = {
@@ -37,28 +32,41 @@ function App() {
     fontSize: "2rem"
   };
 
-  const testimonialItemStyle = {
-    display: "inline-block",
-    padding: 0,
-    position: "relative" as const,
-    margin: "25px 0 15px",
-    width: "100%"
+  const contactCardStyle = {
+    width: '20rem',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
   };
-
-  const testimonialAuthorStyle = {
-    color: "#444",
-    fontWeight: "bold",
-    marginTop: "20px"
-  };
-
-  const testimonialOccupationStyle = {
-    color: "#aaa"
-  };
-
+  
   return <Layout>
-    <div style={heroStyle} className="d-flex align-items-center justify-content-center mb-5">
-      <div className="container d-flex justify-content-center align-items-center">
-        <h1 className="text-white">Secure your Browser and Computer Use LLM Agents.</h1>
+    <div style={heroStyle} className="d-flex align-items-center justify-content-center">
+      <div className="container">
+        <div style={{ position: "absolute", top: "20vh", zIndex: 0 }}>
+          <HelixDemo width={900} height={200} />
+        </div>
+        <div className="row align-items-center">
+          <div className="col-md-8">
+            <h1 className="text-black">Safely Test and Evaluate AI Agents in Controlled Environments</h1>
+          </div>
+          <div className="col-md-4 d-flex justify-content-end">
+            <div className="card" style={contactCardStyle}>
+              <div className="card-body">
+                <h5 className="card-title">Contact Us</h5>
+                <form>
+                  <div className="mb-3">
+                    <input type="text" className="form-control" placeholder="Name" />
+                  </div>
+                  <div className="mb-3">
+                    <input type="email" className="form-control" placeholder="Email" />
+                  </div>
+                  <div className="mb-3">
+                    <textarea className="form-control" rows={3} placeholder="Message"></textarea>
+                  </div>
+                  <button type="submit" className="btn btn-primary w-100">Send Message</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div className="container">
@@ -69,8 +77,8 @@ function App() {
             <div className="d-flex">
               <HandThumbsUp style={mediaIconStyle} />
               <div>
-                <h5>Easy to Use</h5>
-                <p>Increases teaching time by automating attendance in every classroom and decreasing teacher responsibilities.</p>
+                <h5>Safe Testing</h5>
+                <p>Test AI agents with simulated internet access while ensuring no real-world impact through our MITM infrastructure.</p>
               </div>
             </div>
           </div>
@@ -78,8 +86,8 @@ function App() {
             <div className="d-flex">
               <Person style={mediaIconStyle} />
               <div>
-                <h5>Secure Campus</h5>
-                <p>Ensures schoolwide safety by recording student entrances and exits and preventing chronic absenteeism in integrated classrooms.</p>
+                <h5>Cloud Management</h5>
+                <p>Deploy and manage your AI agents in the cloud with our comprehensive management platform and API.</p>
               </div>
             </div>
           </div>
@@ -87,8 +95,8 @@ function App() {
             <div className="d-flex">
               <BarChart style={mediaIconStyle} />
               <div>
-                <h5>Detailed Reporting</h5>
-                <p>Analyzes attendance data to provide extensive administrator reports on in-session campus safety and attendance.</p>
+                <h5>Detailed Analytics</h5>
+                <p>Monitor agent behavior, track performance metrics, and generate comprehensive evaluation reports.</p>
               </div>
             </div>
           </div>
@@ -96,15 +104,15 @@ function App() {
       </section>
       <hr />
       <section id="strategy">
-        <h2>Our Strategy</h2>
+        <h2>Our Technology</h2>
         <div className="row">
           <div className="col-md-4">
             <div className="card mx-3 mb-3">
               <div className="card-body">
-                <h5 className="card-title">Data Collection</h5>
+                <h5 className="card-title">Request Interception</h5>
                 <p className="card-text">
-                  The process begins with our RFID technology. All classrooms will have a scanner that captures scan-in/out data
-                  from students whenever an ID card is detected
+                  Our MITM infrastructure seamlessly intercepts and rewrites network requests,
+                  allowing AI agents to interact with simulated environments without affecting real systems.
                 </p>
               </div>
             </div>
@@ -112,10 +120,10 @@ function App() {
           <div className="col-md-4">
             <div className="card mx-3 mb-3">
               <div className="card-body">
-                <h5 className="card-title">Data Processing</h5>
+                <h5 className="card-title">Environment Control</h5>
                 <p className="card-text">
-                  Data from the RFID-driven scanners are transmitted to the Innexgo database
-                  where this data is sorted into categorizations such as class periods, classrooms, and teachers.
+                  Create custom test scenarios and controlled environments to evaluate AI agent behavior
+                  and capabilities while maintaining complete isolation from production systems.
                 </p>
               </div>
             </div>
@@ -123,28 +131,14 @@ function App() {
           <div className="col-md-4">
             <div className="card mx-3 mb-3">
               <div className="card-body">
-                <h5 className="card-title">Data Analysis</h5>
+                <h5 className="card-title">Performance Analysis</h5>
                 <p className="card-text">
-                  Innexgo displays the attendance data through our analytics dashboard where
-                  teachers and administrators can monitor student attendance records and access numerous charts and reports.
+                  Comprehensive analytics and reporting tools help you understand agent behavior,
+                  identify potential issues, and optimize performance in your development cycle.
                 </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-      <hr />
-      <section id="testimonials">
-        <h2>What people say about us</h2>
-        <div style={testimonialItemStyle}>
-          <p>&quot;Less time on trying to check who&apos;s there and more time for teaching.&quot;</p>
-          <span className="d-block" style={testimonialAuthorStyle}>Channy Cornejo</span>
-          <span className="d-block" style={testimonialOccupationStyle}>Math Department Chair</span>
-        </div>
-        <div style={testimonialItemStyle}>
-          <p>&quot;It holds students accountable for their attendance habits.&quot;</p>
-          <span className="d-block" style={testimonialAuthorStyle}>Carole Ng</span>
-          <span className="d-block" style={testimonialOccupationStyle}>Computer Science Teacher</span>
         </div>
       </section>
     </div>
